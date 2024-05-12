@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="title">Zero</div>
+    <div id="game_list">
+    </div>
+    <div id="game_div"></div>
+    <ul>
+        <li>The goal is to set all numbers to 0.</li>
+        <li>Use the "Change" buttons to change the numbers.</li>
+        <li>Press <a onclick="reset()">"Solve"</a> to set numbers to 0 (boon mode).</li>
+        <li>Press <a onclick="restart()">"Restart"</a> to change the numbers randomly and start over.</li>
+    </ul>
+    
+    <div class="button-container">
+        <button onclick="reset()">Solve</button>
+        <button onclick="restart()">Restart</button>
+    </div>
+    
+</body>
+<script>
+    var game_list = ["1_1_1","2_1_1","2_4_1","2_4_2"];
+
+    game_list_div = document.getElementById("game_list");
+    game_list_div.innerHTML = "";
+
+    let list = document.createElement('ul');
+
+
+    // Loop through the items array and create list items
+    game_list.forEach(itemText => {
+        let listItem = document.createElement('li');
+        listItem.innerHTML="<a href=\"?script=" + itemText + "\">"+ itemText+ "</a>";
+        list.appendChild(listItem);
+    });
+
+    game_list_div.appendChild(list);
+
+</script>
+<script src="utils.js"></script>
+<script src="zero_general.js"></script>
+
+</html>

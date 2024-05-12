@@ -1,0 +1,30 @@
+table {
+    border-collapse: collapse;
+    width: 50%;
+    margin: 20px auto;
+}
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+}
+textarea {
+    width: 100%;;
+}
+button {
+    flex-shrink: 1;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.button-container {
+    text-align: center;
+    margin-top: 10px;
+    align-items: left;
+    justify-content: center;
+}
+.title{
+    font-size: xx-large;
+    font-weight: bold;
+}
