@@ -59,9 +59,10 @@ function loadGameScript()
     if (urlParams.has('script')) {
         // Get the value of the "script" parameter
         scriptSrc = urlParams.get('script') + '.js';
+        document.getElementById('subtitle').textContent = urlParams.get('script');
     }
 
-       document.getElementById('title').textContent = "Zero + urlParams.get('script');
+       
    
     loadGameScriptXXX(scriptSrc);
 }
