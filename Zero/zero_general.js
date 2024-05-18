@@ -61,6 +61,7 @@ function loadGameScript()
         scriptSrc = urlParams.get('script') + '.js';
     }
 
+       document.getElementById('title').textContent = "Zero + urlParams.get('script');
    
     loadGameScriptXXX(scriptSrc);
 }
