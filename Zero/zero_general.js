@@ -167,19 +167,6 @@ function buttonClick(button_index) {
     fillTable(); 
 }
 
-
-function isSolved()
-{
-    for (let i = 0; i < number_rows.length; i++) {
-        for (let j = 0; j < number_rows[i].length; j++) {
-            if (number_rows[i][j] !== 0) {
-                return false; // If any element is not 0, return false
-            }
-        }
-    }
-    return true; // All elements are 0
-}
-
 function reset()
 {
     number_rows = number_rows.map(function(number_row) {
