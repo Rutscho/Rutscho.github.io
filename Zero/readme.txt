@@ -1,2 +1,0 @@
-games where a set of numbers has to be brought to 0 with buttons that change some of the numbers
-not sure if it should be part of the game to figure out what the buttons do exactly, what system they follow

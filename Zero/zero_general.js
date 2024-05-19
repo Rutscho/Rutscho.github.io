@@ -3,7 +3,28 @@
 var number_rows;
 let game_script;
 
+fillGameList();
 loadGameScript();
+
+function fillGameList()
+{
+    var game_list = ["1_1_1","2_1_1","2_2_1","2_2_2",,"2_2_3","2_3_1","2_3_2","2_3_3","2_4_1","2_4_2"];
+
+    game_list_div = document.getElementById("game_list");
+    game_list_div.innerHTML = "";
+
+    let list = document.createElement('ul');
+
+
+    // Loop through the items array and create list items
+    game_list.forEach(itemText => {
+        let listItem = document.createElement('li');
+        listItem.innerHTML="<a href=\"?script=" + itemText + "\">"+ itemText+ "</a>";
+        list.appendChild(listItem);
+    });
+
+    game_list_div.appendChild(list);
+}
 
 function finishSetup()
 {
