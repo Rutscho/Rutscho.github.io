@@ -1,14 +1,17 @@
 // general code
 
-var number_rows;
+let shapes;
+let orig_shapes;
 let game_script;
+
+let animation_time = 500.0; // ms
 
 fillGameList();
 loadGameScript();
 
 function fillGameList()
 {
-    var game_list = ["1_1_1","2_1_1","2_2_1","2_2_2",,"2_2_3","2_3_1","2_3_2","2_3_3","2_4_1","2_4_2"];
+    var game_list = ["2_4_1","2_4_2"];
 
     game_list_div = document.getElementById("game_list");
     game_list_div.innerHTML = "";
@@ -32,11 +35,12 @@ function finishSetup()
     {
         return;
     }
-    number_rows = createNumberRows(getRowCounts());
+    shapes = getShapes();
+    orig_shapes = shapes;
 
     getGameDiv().innerHtml = "";
 
-    createTable();
+    createCanvas();
     createPlayButtons();
     restart();
 }
@@ -73,9 +77,9 @@ function loadGameScriptXXX(scriptSrc)
 function loadGameScript()
 {
     // Get the parameters from the URL
-    const urlParams = new URLSearchParams(window.location_indices.search);
+    const urlParams = new URLSearchParams(window.location.search);
 
-    let scriptSrc ="";//= "1_1_1.js";
+    let scriptSrc ="";
     // Check if the "script" parameter exists
     if (urlParams.has('script')) {
         // Get the value of the "script" parameter
@@ -83,25 +87,8 @@ function loadGameScript()
         document.getElementById('subtitle').textContent = urlParams.get('script');
     }
 
-       
-   
     loadGameScriptXXX(scriptSrc);
 }
-
-function createNumberRows(rowCounts) 
-{
-    var numberRows = [];
-
-    for (var i = 0; i < rowCounts.length; i++) {
-        var row = [];
-        for (var j = 0; j < rowCounts[i]; j++) {
-            row.push(0);
-        }
-        numberRows.push(row);
-    }
-
-    return numberRows;
-} 
 
 function createPlayButtons()
 {
@@ -119,62 +106,49 @@ function createPlayButtons()
 
 }
 
-function createTable() 
+function clearCanvas()
 {
-    let table = document.createElement("table");
-    table.id = "numberTable";
-    getGameDiv().appendChild(table);
-   
-    number_rows.forEach(function(number_row) {
-        let row = table.insertRow();
-        number_row.forEach(function(number) {
-            var cell = row.insertCell();
-            cell.textContent = number;
-        });
-    });
+    let canvas = document.getElementById('game_canvas');
+    let ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-// Function to fill the table with updated values
-function fillTable() {
-    let table = document.getElementById("numberTable");
-    let rows = table.querySelectorAll("tr");
-    rows.forEach(function(row,row_index)
-    {
-        let cells = row.querySelectorAll("td");
-            cells.forEach(function(cell, column_index) {
-            cell.textContent = number_rows[row_index][column_index];
-        });
-    });
-    
+function createCanvas()
+{
+    let game_div = document.getElementById("game_div");
+    let canvas_div = document.createElement("div");
+    canvas_div.id = "canvas_div";
+    game_div.appendChild(canvas_div);
+    let game_canvas = document.createElement("canvas");
+    game_canvas.id="game_canvas";
+    canvas_div.appendChild(game_canvas);
 }
 
-function getAdaptedNumbersForButtonClick(number_rows_param ,button_index)
-{
-    return number_rows_param.map(function(number_row, row_index) {
-        return number_row.map(function(number, number_index) {
-            return numberAdapt(number,row_index, number_index, button_index);
-        });
-    });
+function updateCanvas() {
+ 
+    clearCanvas();
+    var canvas = document.getElementById('game_canvas');
+    var ctx = canvas.getContext('2d');
+    shapes.draw(ctx,true);
+    orig_shapes.draw(ctx,false)
+
 }
 
-function adaptNumberForButtonClick(button_index)
+function adaptShapesLikeForButtonClick(button_index)
 {
-    number_rows = getAdaptedNumbersForButtonClick(number_rows, button_index);
+    shapes.moveByButtonIndex(button_index, false);
 }
 
 function buttonClick(button_index) {
-    adaptNumberForButtonClick(button_index);
-    fillTable(); 
+    shapes.moveByButtonIndex(button_index, true);
+    updateCanvas(); 
 }
+
 
 function reset()
 {
-    number_rows = number_rows.map(function(number_row) {
-        return number_row.map(function(number) {
-            return 0;
-        });
-    });
-    fillTable(); 
+    shapes = getShapes();
+    updateCanvas(); 
 }
 
 
@@ -186,8 +160,8 @@ function restart()
     for(let i=0;i<500;i++)
     {
         let randomNumber = Math.floor(Math.random() * getNumberOfButtons());
-        adaptNumberForButtonClick(randomNumber);
+        adaptShapesLikeForButtonClick(randomNumber);
     }
 
-    fillTable(); 
+    updateCanvas(); 
 }
