@@ -35,7 +35,7 @@ function finishSetup()
     {
         return;
     }
-    shapes = getShapes();
+    shapes = createShapes();
     orig_shapes = shapes;
 
     getGameDiv().innerHtml = "";
@@ -96,7 +96,7 @@ function createPlayButtons()
     buttonContainer.className = "button-container";
     getGameDiv().appendChild(buttonContainer);
     
-    for(var button_index = 0; button_index < getNumberOfButtons(); button_index++)
+    for(var button_index = 0; button_index < shapes.getNumberOfButtons(); button_index++)
     {
         let button = document.createElement("button");
         button.textContent = "Change " + (button_index + 1);
@@ -147,7 +147,7 @@ function buttonClick(button_index) {
 
 function reset()
 {
-    shapes = getShapes();
+    shapes = createShapes();
     updateCanvas(); 
 }
 
@@ -159,7 +159,7 @@ function restart()
     // in if its trivial we can simply restart
     for(let i=0;i<500;i++)
     {
-        let randomNumber = Math.floor(Math.random() * getNumberOfButtons());
+        let randomNumber = Math.floor(Math.random() *shapes.getNumberOfButtons());
         adaptShapesLikeForButtonClick(randomNumber);
     }
 
