@@ -73,7 +73,7 @@ function loadGameScriptXXX(scriptSrc)
 function loadGameScript()
 {
     // Get the parameters from the URL
-    const urlParams = new URLSearchParams(window.location_indices.search);
+    const urlParams = new URLSearchParams(window.location.search);
 
     let scriptSrc ="";//= "1_1_1.js";
     // Check if the "script" parameter exists
