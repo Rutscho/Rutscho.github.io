@@ -11,7 +11,7 @@ loadGameScript();
 
 function fillGameList()
 {
-    var game_list = ["2_4_1","2_4_2"];
+    var game_list = ["2_4_1","2_4_2","2_5_1","2_5_2","2_6_1","2_6_2"];
 
     game_list_div = document.getElementById("game_list");
     game_list_div.innerHTML = "";
