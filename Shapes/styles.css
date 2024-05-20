@@ -17,8 +17,8 @@ button {
 }
 
 #canvas_div {
-    width: 50vw;  /* 50% of the viewport width */
-    height: 50vh; /* 50% of the viewport height */
+    width: min(69vw, 69vh);  /* 50% of the viewport width */
+    height: min(69vw, 69vh); /* 50% of the viewport height */
     margin: 0 auto; /* Center the div horizontally */
     display: flex;
     justify-content: center;
