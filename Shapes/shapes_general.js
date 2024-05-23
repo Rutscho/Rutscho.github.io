@@ -109,6 +109,8 @@ function createPlayButtons()
 function clearCanvas()
 {
     let canvas = document.getElementById('game_canvas');
+    canvas.width = 1000;
+    canvas.height = 1000;
     let ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
