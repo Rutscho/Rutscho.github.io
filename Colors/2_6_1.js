@@ -70,6 +70,11 @@ function preCreateShapes()
         shapes.shapes.push(createShape(1.3,color));
     });
 
+    const minishaper = 0.6;
+    shapes.shapes.push(createShape(minishaper,'#008000'));
+    shapes.shapes.push(createShape(minishaper, '#000000'));
+    shapes.shapes.push(createShape(minishaper, '#000000'));
+    shapes.shapes.push(createShape(minishaper, '#000000'));
 
     function loc0(a)
     {
@@ -120,7 +125,12 @@ function preCreateShapes()
 
         loc2(210,180),
         loc2(330,300),
-        loc2(450,420)
+        loc2(450,420),
+
+        loc0(45),
+        loc0(135),
+        loc0(225),
+        loc0(315)
     ];
 
 
