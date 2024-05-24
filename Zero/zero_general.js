@@ -117,6 +117,25 @@ function createPlayButtons()
         buttonContainer.appendChild(button);
     }
 
+    document.addEventListener('keydown', function(event) {
+        // Using event.key to check if the key pressed is a number (0-9)
+        if (event.key >= '1' && event.key <= '9') {
+            const button_index = parseInt(event.key, 10) -1;
+            if(button_index < getNumberOfButtons())
+            {
+                buttonClick(button_index);
+            }
+        }
+        else if(event.key == 's')
+        {
+            reset();
+        }
+        else if(event.key == 'r')
+        {
+            restart();
+        }
+    });
+
 }
 
 function createTable() 
