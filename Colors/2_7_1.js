@@ -9,44 +9,58 @@ function preCreateShapes()
     {
         return 2;
     };
-    function get_perm(button_index)
-    {
-        if(button_index == 0)
-            {
-                return[[0,3,6,9],[1,4,7,10],[2,5,8,11]];
-            }
-            else
-            {
-                return[[15,12,9,7],[16,13,10,8],[17,14,11,6]];
-            }
-    }
     shapes.getPositionPermutationForButtonIndex = function(button_index)
     {
-       let rv = get_perm(button_index);
-       return rv.map(ar =>{
-        return ar.map(x =>{return x +18;});
-       });
+        if(button_index == 0)
+        {
+            return[[0,3,6,9],[1,4,7,10],[2,5,8,11]];
+        }
+        else
+        {
+            return[[15,12,9,7],[16,13,10,8],[17,14,11,6]];
+        }
     }
     const colors = [
         '#FF0000', // Red
-        '#008000', // Green
-        '#0000FF', // Blue
+        '#000000', // Green
+        '#000000', // Blue
         '#FFFF00', // Yellow
-        '#00FFFF', // Cyan
-        '#FF00FF', // Magenta
+        '#000000', // Cyan
+        '#000000', // Magenta
         '#FFA500', // Orange
-        '#800080', // Purple
-        '#00FF00', // Lime
-        '#FFC0CB', // Pink
-        '#008080', // Teal
-        '#E6E6FA', // Lavender
-        '#A52A2A', // Brown
-        '#800000', // Maroon
+        '#000000', // Purple
+        '#000000', // Lime
+        '#000000', // Pink
+        '#000000', // Teal
+        '#000000', // Lavender
+        '#000000', // Brown
+        '#000000', // Maroon
         '#808000', // Olive
-        '#000080', // Navy
-        '#FFD700', // Gold
-        '#40E0D0'  // Turquoise
+        '#000000', // Navy
+        '#000000', // Gold
+        '#40E0D0' // Turquoise
     ];
+
+    // const colors = [
+    //     '#FF0000', // Red
+    //     '#008000', // Green
+    //     '#0000FF', // Blue
+    //     '#FFFF00', // Yellow
+    //     '#00FFFF', // Cyan
+    //     '#FF00FF', // Magenta
+    //     '#FFA500', // Orange
+    //     '#800080', // Purple
+    //     '#00FF00', // Lime
+    //     '#FFC0CB', // Pink
+    //     '#008080', // Teal
+    //     '#E6E6FA', // Lavender
+    //     '#A52A2A', // Brown
+    //     '#800000', // Maroon
+    //     '#808000', // Olive
+    //     '#000080', // Navy
+    //     '#FFD700', // Gold
+    //     '#40E0D0'  // Turquoise
+    // ];
 
     
 
@@ -54,11 +68,6 @@ function preCreateShapes()
     colors.forEach(color =>
     {
         shapes.shapes.push(createShape(1.3,color));
-    });
-
-    colors.forEach(color =>
-    {
-        shapes.shapes.push(createShape(0.8,color));
     });
 
     function loc1(a)
@@ -102,9 +111,7 @@ function preCreateShapes()
         loc2(330,300),
         loc2(450,420)
     ];
-    
 
-    shapes.shape_centers.push(...shapes.shape_centers);
 
     shapes.shape_sizes=0.05;
 

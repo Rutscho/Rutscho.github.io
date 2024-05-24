@@ -94,9 +94,38 @@ function createShapes()
             interpolation_level = 1-(shapes.animation_end -now)/animation_time;
             request_next_animation_frame = true;
         }
+
+        // draw background areas
         for(let shape_index = 0;shape_index < this.shapes.length;shape_index++)
         {
             let shape = this.shapes[shape_index];
+            let size = this.shape_sizes * shape.size;            
+            let center = this.shape_centers[shape_index];
+
+            let radius = Math.min(ctx.canvas.width,ctx.canvas.height)*size;
+            ctx.beginPath();
+            ctx.arc(center.x*ctx.canvas.width, (1-center.y)*ctx.canvas.height, radius, 0, 2 * Math.PI);
+            ctx.closePath();
+
+            if(shape.color !== '#000000')
+            {
+                ctx.fillStyle = shape.color;
+                ctx.fill();
+            }
+
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+        }
+        const inner_size_factor = 0.6;
+        for(let shape_index = 0;shape_index < this.shapes.length;shape_index++)
+        {
+            let shape = this.shapes[shape_index];
+            if(shape.color === '#000000') // dont draw black
+            {
+                continue;
+            }
+            
 
             let size = this.shape_sizes * shape.size;
             
@@ -105,7 +134,7 @@ function createShapes()
             let center = interpolateXY(interpolation_level, previous_center,current_center);
 
           
-            let radius = Math.min(ctx.canvas.width,ctx.canvas.height)*size;
+            let radius = Math.min(ctx.canvas.width,ctx.canvas.height)*size*inner_size_factor;
             ctx.beginPath();
             ctx.arc(center.x*ctx.canvas.width, (1-center.y)*ctx.canvas.height, radius, 0, 2 * Math.PI);
             ctx.closePath();

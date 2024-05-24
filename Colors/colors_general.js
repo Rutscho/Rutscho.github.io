@@ -10,7 +10,7 @@ loadGameScript();
 
 function fillGameList()
 {
-    var game_list = ["2_4_1","2_16_1"];
+    var game_list = ["2_4_1","2_7_1"];
 
     game_list_div = document.getElementById("game_list");
     game_list_div.innerHTML = "";
