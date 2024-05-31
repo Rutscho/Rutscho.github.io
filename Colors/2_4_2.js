@@ -13,44 +13,30 @@ function preCreateShapes()
     {
         if(button_index == 0)
         {
-            return[[0,1,2,3],[6,7,8,9]];
+            return[[0,1,2],[5,6,7]];
         }
         else
         {
-            return[[3,4,5,6],[9,10,11,0]];
+            return[[2,3,4,5],[7,8,9,0]];
         }
     }
+  
+
+   
+    
     const colors = [
         '#FF0000', // Red
-        '#008000', // Green
-        '#FF00FF', // Blue
-        '#000000', // Yellow
+        '#000000', // Green
+        '#0000FF', // Blue
+        '#FF00FF', // Yellow
         '#000000', // Cyan
         '#000000', // Magenta
         '#000000', // Orange
         '#000000', // Purple
-        '#000000', // Lime
-        '#000000', // Pink
-        '#008080', // Teal
-        '#FFA500' // Lavender
+        '#000000', // -
+        '#00FF00', // Lime
     ];
 
-   
-    
-    // const colors = [
-    //     '#FF0000', // Red
-    //     '#008000', // Green
-    //     '#0000FF', // Blue
-    //     '#FFFF00', // Yellow
-    //     '#00FFFF', // Cyan
-    //     '#FF00FF', // Magenta
-    //     '#FFA500', // Orange
-    //     '#800080', // Purple
-    //     '#00FF00', // Lime
-    //     '#FFC0CB', // Pink
-    //     '#008080', // Teal
-    //     '#E6E6FA' // Lavender
-    // ];
 
     
 
@@ -79,16 +65,14 @@ function preCreateShapes()
     };
     shapes.shape_centers =[
         loc1(135),
-        loc2(135,90),
-        loc2(45,90),
+        loc2(135,60),
 
         loc1(45),
         loc2(45,0),
         loc2(-45,0),
 
         loc1(-45),
-        loc2(-45,-90),
-        loc2(-135,-90),
+        loc2(-45,-120),
 
         loc1(-135),
         loc2(-135,-180),

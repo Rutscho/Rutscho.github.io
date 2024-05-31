@@ -13,30 +13,34 @@ function preCreateShapes()
     {
         if(button_index == 0)
         {
-            return[[0,1,2,3],[6,7,8,9]];
+            return[[0,3,6,9],[1,4,7,10],[2,5,8,11],[18,19,20,21]];
         }
         else
         {
-            return[[3,4,5,6],[9,10,11,0]];
+            return[[15,12,9,7],[16,13,10,8],[17,14,11,6]];
         }
     }
     const colors = [
         '#FF0000', // Red
-        '#008000', // Green
-        '#FF00FF', // Blue
-        '#000000', // Yellow
+        '#000000', // Green
+        '#000000', // Blue
+        '#FFFF00', // Yellow
         '#000000', // Cyan
         '#000000', // Magenta
-        '#000000', // Orange
+        '#FFA500', // Orange
         '#000000', // Purple
         '#000000', // Lime
         '#000000', // Pink
-        '#008080', // Teal
-        '#FFA500' // Lavender
+        '#000000', // Teal
+        '#000000', // Lavender
+        '#000000', // Brown
+        '#000000', // Maroon
+        '#808000', // Olive
+        '#000000', // Navy
+        '#000000', // Gold
+        '#40E0D0' // Turquoise
     ];
 
-   
-    
     // const colors = [
     //     '#FF0000', // Red
     //     '#008000', // Green
@@ -49,7 +53,13 @@ function preCreateShapes()
     //     '#00FF00', // Lime
     //     '#FFC0CB', // Pink
     //     '#008080', // Teal
-    //     '#E6E6FA' // Lavender
+    //     '#E6E6FA', // Lavender
+    //     '#A52A2A', // Brown
+    //     '#800000', // Maroon
+    //     '#808000', // Olive
+    //     '#000080', // Navy
+    //     '#FFD700', // Gold
+    //     '#40E0D0'  // Turquoise
     // ];
 
     
@@ -60,9 +70,19 @@ function preCreateShapes()
         shapes.shapes.push(createShape(1.3,color));
     });
 
+
+    function loc0(a)
+    {
+        const d = 0.05;
+        let l = {x: 0.5,y:0.5};
+        l.x +=  d*Math.cos(a*Math.PI/180);
+        l.y +=  d*Math.sin(a*Math.PI/180);
+        return l;
+    };
+
     function loc1(a)
     {
-        const d = 0.2/Math.sqrt(2);
+        const d = 0.2;
         let l = {x: 0.5,y:0.5};
         l.x +=  d*Math.cos(a*Math.PI/180);
         l.y +=  d*Math.sin(a*Math.PI/180);
@@ -70,7 +90,7 @@ function preCreateShapes()
     };
     function loc2(a,b)
     {
-        const d = 0.2/Math.sqrt(2);
+        const d = 0.2;
         const d2 = 0.2;
         let l = {x: 0.5,y:0.5};
         l.x +=  d*Math.cos(a*Math.PI/180) + d2*Math.cos(b*Math.PI/180);
@@ -78,21 +98,29 @@ function preCreateShapes()
         return l;
     };
     shapes.shape_centers =[
-        loc1(135),
-        loc2(135,90),
-        loc2(45,90),
+        loc2(150,120),
+        loc2(270,240),
+        loc2(390,0),
 
-        loc1(45),
-        loc2(45,0),
-        loc2(-45,0),
+        loc2(90,120),
+        loc2(210,240),
+        loc2(330,360),
 
-        loc1(-45),
-        loc2(-45,-90),
-        loc2(-135,-90),
+        loc1(90),
+        loc1(210),
+        loc1(330),
 
-        loc1(-135),
-        loc2(-135,-180),
-        loc2(-225,-180)
+        loc1(150),
+        loc1(270),
+        loc1(390),
+
+        loc2(150,180),
+        loc2(270,300),
+        loc2(390,420),
+
+        loc2(210,180),
+        loc2(330,300),
+        loc2(450,420)
     ];
 
 
