@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Blocks Editor</title>
+  <style>
+    body, html { margin: 0; height: 100%; overflow: hidden; }
+    #ui {
+      position: fixed; top: 10px; left: 10px; background: rgba(255 255 255 / 0.9); padding: 10px; border-radius: 6px; font-family: sans-serif;
+      z-index: 10;
+    }
+    #canvas-container {
+      width: 100vw; height: 100vh;
+    }
+    #eyedropper {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      font-size: 24px;
+      cursor: grab;
+      user-select: none;
+      z-index: 1000;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/index-8f5bc8f7.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <table>
+    <label for="colorPicker">Block Color: </label>
+    <input type="color" id="colorPicker" value="#ff0000" />
+    <div>
+      <div id="eyedropper" draggable="true" title="Drag to pick color">🎨</div>
+    </div>
+    <label>
+      <input type="checkbox" id="deleteModeToggle" />
+      Delete Mode
+    </label>
+
+     
+    <button id="downloadBtn">Download</button>
+     
+    <input type="file" id="uploadInput" style="display:none" />
+     
+    <button id="uploadBtn">Upload</button>
+    
+    <label>
+      <input type="checkbox" id="lockToggle" />
+      Lock Image
+    </label>
+
+  </table>
+  </div>
+  <div id="canvas-container"></div>
+
+  
+</body>
+</html>
