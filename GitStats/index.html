@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<!-- 
+    This tool is open and reusable. You are free to copy, modify, and redistribute it.
+    Use at your own risk – no warranties or guarantees are provided.
+    Built using Chart.js (MIT License) — https://www.chartjs.org/
+-->
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Drop and Parse</title>
+    <!-- 
+    This project uses Chart.js (https://www.chartjs.org/) 
+    Chart.js is open-source software licensed under the MIT License 
+    (https://github.com/chartjs/Chart.js/blob/master/LICENSE.md)
+    -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- <script src="chart.js"></script> -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #drop-area {
+            border: 2px dashed #1c4baf;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1c4baf;
+        }
+
+        #file-content {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #file-content th, #file-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        #file-content th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+        }
+
+         /* Add some basic styling */
+        #filterContainer {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .filter {
+            margin: 10px 0;
+            border: 1px solid #ccc; /* Optional: border for filter box */
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .filter-inputs {
+            display: none; /* Hide inputs by default */
+            margin-top: 10px;
+        }
+
+        .toggle-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em; /* Increase size for better visibility */
+            margin-right: 10px;
+        }
+
+        .toggle-button.collapsed::after {
+            content: '►'; /* Right triangle for collapsed */
+        }
+
+        .toggle-button.expanded::after {
+            content: '▼'; /* Down triangle for expanded */
+        }
+
+       
+    </style>
+</head>
+<body>
+
+   <h1>👨‍💻 Git Stats Playground</h1>
+    <p>Drop your mighty <code>git log</code> file below or click to summon its secrets:</p>
+    <div id="drop-area">
+          <p>📦 Drop your commit magic here!</p>
+    
+        <p style="font-size: 0.9em; color: #555;">
+            Make sure your log file is in the correct format:
+        </p>
+        
+        <code style="display: block; background: #f5f5f5; padding: 0.5em; border-radius: 5px; font-size: 0.9em; color: #333;">
+            git log HEAD --no-merges --pretty=format:"# %H %an %at" --numstat &gt;&gt; log.txt
+        </code>
+        
+        <p style="font-size: 0.85em; color: #888; margin-top: 0.3em;">
+            ⚠️ The format is important! Other formats might not parse correctly.
+        </p>
+        <input type="file" id="file-input" style="display:none;" />
+        <button id="file-select-button">Select a file</button>
+    </div>
+
+    
+    
+
+    <div id="filterContainer">
+        <h2>Filters</h2>
+        <p style="font-style: italic; color: #555;">
+            Want cleaner charts? Filter out the noise here before we draw the data magic! ✨
+        </p>
+        <button id="addFilterBtn">Add Filter</button>
+        <div id="filters"></div>
+    </div>
+
+    <button onclick="refreshChart()">RefreshChart</button>
+
+    <div>
+       <label for="customFormula" style="display: block; margin: 1em 0 0.5em; font-weight: bold; font-size: 1.1em; color: #333;">
+            🧙 Cast a formula spell!
+            <span style="display: block; font-weight: normal; font-size: 0.9em; color: #666; margin-top: 0.3em;">
+                Variables: <code>a</code> = lines added, <code>r</code> = lines removed, <code>t</code> = normalized time [0–1], <code>c</code> = commit count
+            </span>
+        </label>
+
+
+
+        <input type="text" id="customFormula" placeholder="e.g., a - r + t * 10 + c * 2" style="width: 100%;" />
+    </div>
+
+
+    <canvas id="commitChart" width="400" height="200"></canvas>
+
+    <canvas id="scoreOverTimeChart" width="400" height="200"></canvas>
+
+
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const fileOutput = document.getElementById('file-output');
+        const fileSelectButton = document.getElementById('file-select-button');
+
+        // Handle file select button click
+        fileSelectButton.addEventListener('click', () => fileInput.click());
+
+        // Handle file drop
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#1c4baf';
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.style.borderColor = '#ccc';
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.style.borderColor = '#ccc';
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                readFile(file);
+            }
+        });
+
+        // Handle file input
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                readFile(file);
+            }
+        });
+
+        // Read and parse the file
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                displayFileContent(content);
+            };
+            reader.readAsText(file);
+        }
+
+        
+
+		let allCommitData = [];
+
+		// Display the content
+        function fillCommitData(content) {
+            const lines = content.split('\n');
+    
+			let addCommitData;
+            lines.forEach(line => {
+                if (line.startsWith('#')) {
+					if(addCommitData)
+					{
+						allCommitData.push(addCommitData);
+					}
+
+					addCommitData = {};
+                    const [hash,commitID, author, dateNum] = line.split(' ');
+					//const timestamp = parseInt(dateNum, 10); // The last number is the Unix timestamp
+            		//const date = new Date(timestamp * 1000); // Convert to milliseconds and create a Date object
+            		//const formattedDate = date.toLocaleString(); // Format the date to a readable string
+
+					addCommitData["commitID"]=commitID;
+					addCommitData["author"]=author;
+					addCommitData["date"]= parseInt(dateNum);
+					addCommitData["fileChanges"] = [];
+
+                } else if (line.trim()) {
+                    const [added, removed, ...pathParts] = line.split(/\s+/);
+					if(isFinite(added) && isFinite(removed))
+					{
+						let addFileChange = {};
+						addFileChange["added"] = parseInt(added);	
+						addFileChange["removed"] = parseInt(removed);
+
+                        // Join path parts to get the full path
+                        let filePath = pathParts.join(' ');
+
+                        // Check if the path contains "=>" (indicating a rename/move)
+                        const renameMatch = filePath.match(/\{(.+?)\s*=>\s*(.+?)\}/) || filePath.match(/(.+?)\s*=>\s*(.+)/);
+
+                        if (renameMatch) {
+                            // Handle the renamed file case: use the new file path
+                            const before = renameMatch[1]; // The 'before' part
+                            const after = renameMatch[2];  // The 'after' part
+                            
+                            if (filePath.includes('{')) {
+                                // If curly braces are present, replace the {A => B} part
+                                filePath = filePath.replace(/\{.*?\}/, after);
+                            } else {
+                                // If no curly braces, replace the entire path with the 'after' value
+                                filePath = after;
+                            }
+                        }
+
+						addFileChange["path"] = filePath;
+						addCommitData["fileChanges"].push(addFileChange);
+					}   
+                }
+            });
+
+			if(addCommitData)
+			{
+				allCommitData.push(addCommitData);
+			}
+
+        }
+
+        
+
+
+        
+
+
+   
+
+
+
+       
+
+       // Map to store applied filters
+        
+        let filterCount = 0; // To track the number of filters added
+
+        // Add event listener for adding a new filter
+        document.getElementById('addFilterBtn').addEventListener('click', () => {
+            addFilter();
+        });
+
+        function addFilter() {
+            filterCount++;
+            const filterDiv = document.createElement('div');
+            filterDiv.className = 'filter';
+            filterDiv.id = `filter-${filterCount}`;
+            
+            // Set the filter index as a custom attribute
+            filterDiv.setAttribute('data-filter-index', filterCount); // Using a data attribute for the index
+
+            const filterTypeSelect = document.createElement('select');
+            filterTypeSelect.className = 'filter-type';
+            
+            // Define filter types
+            const filterTypes = [
+                "none",
+                "date",
+                "lines",
+                "percentile lines",
+                "files",
+                "extensions",
+                "author"
+            ];
+            
+            filterTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                filterTypeSelect.appendChild(option);
+            });
+
+            // Create a container for the filter inputs
+            const filterInputsDiv = document.createElement('div');
+            filterInputsDiv.className = 'filter-inputs';
+
+            // Event listener to update inputs based on selected filter type
+            filterTypeSelect.addEventListener('change', () => {
+                const filterIndex = filterDiv.getAttribute('data-filter-index'); // Retrieve the filter index
+                updateFilter(filterTypeSelect.value, filterInputsDiv, filterIndex);
+            });
+
+            // Append elements to filter div
+            filterDiv.appendChild(filterTypeSelect);
+            filterDiv.appendChild(filterInputsDiv);
+            
+            // Collapsible functionality
+            const toggleButton = document.createElement('button');
+            toggleButton.textContent = ''; // No initial text
+            toggleButton.className = 'toggle-button collapsed'; // Start as collapsed
+            toggleButton.addEventListener('click', () => {
+                const inputsVisible = filterInputsDiv.style.display === 'block';
+                filterInputsDiv.style.display = inputsVisible ? 'none' : 'block';
+                toggleButton.classList.toggle('expanded', !inputsVisible);
+                toggleButton.classList.toggle('collapsed', inputsVisible);
+            });
+
+            filterDiv.insertBefore(toggleButton, filterTypeSelect);
+            
+            document.getElementById('filters').appendChild(filterDiv);
+        }
+
+       
+        function createDateFilter(filterInputsDiv)
+        {
+            let labelStart = document.createElement('label');
+            labelStart.innerHTML = 'Start Date:';
+            filterInputsDiv.appendChild(labelStart);
+
+            let inputStart = document.createElement('input');
+            inputStart.type = 'date';
+            filterInputsDiv.appendChild(inputStart);
+
+            let labelEnd = document.createElement('label');
+            labelEnd.innerHTML = 'End Date:';
+            filterInputsDiv.appendChild(labelEnd);
+
+            let inputEnd = document.createElement('input');
+            inputEnd.type = 'date';
+            filterInputsDiv.appendChild(inputEnd);
+
+            return (commits) => {
+              
+                const startDateInput = inputStart.value;
+                const endDateInput = inputEnd.value;
+              
+            
+                // Convert date inputs to JavaScript Date objects if provided
+                const startDate = startDateInput ? new Date(startDateInput) : null;
+                const endDate = endDateInput ? new Date(endDateInput) : null;
+
+                // Filter the commit data based on the selected date range
+               return commits.filter(commit => {
+                    const commitDate = new Date(commit.date * 1000);  // Assuming the date is a Unix timestamp
+
+                    // If no start date is set, ignore the lower bound
+                    const isAfterStart = startDate ? commitDate >= startDate : true;
+
+                    // If no end date is set, ignore the upper bound
+                    const isBeforeEnd = endDate ? commitDate <= endDate : true;
+
+                    // Include the commit if it's within the specified range
+                    return isAfterStart && isBeforeEnd;
+                });
+            };
+        }
+
+      
+        function filterByLimmitLines(filteredCommitData, lowerLimit, upperLimit)
+        {
+            return filteredCommitData.filter(commit => {
+                let totalAdded = 0;
+                let totalRemoved = 0;
+
+                // Sum the added and removed lines per commit
+                commit.fileChanges.forEach(change => {
+                    totalAdded += change.added;
+                    totalRemoved += change.removed;
+                });
+
+                // Calculate the absolute difference
+                const totalAbsDifference = Math.abs(totalAdded - totalRemoved);
+
+                // Filter out commits where the absolute difference doesn't meet the limits
+                return totalAbsDifference >= lowerLimit && totalAbsDifference <= upperLimit;
+            });
+        }
+
+        function createLinesLimitFilter(filterInputsDiv)
+        {
+            let labelLowerLimit = document.createElement('label');
+            labelLowerLimit.innerHTML = 'Lower Limit (Lines):';
+            filterInputsDiv.appendChild(labelLowerLimit);
+
+            let inputLowerLimit = document.createElement('input');
+            inputLowerLimit.type = 'number';
+            inputLowerLimit.placeholder = "0";
+            filterInputsDiv.appendChild(inputLowerLimit);
+
+            let labelUpperLimit = document.createElement('label');
+            labelUpperLimit.innerHTML = 'Upper Limit (Lines):';
+            filterInputsDiv.appendChild(labelUpperLimit);
+
+            let inputUpperLimit = document.createElement('input');
+            inputUpperLimit.type = 'number';
+            inputUpperLimit.placeholder = "0";
+            filterInputsDiv.appendChild(inputUpperLimit);
+
+            return (commits) => {
+                const inputLowerValue = inputLowerLimit.value;
+                const inputUpperValue = inputUpperLimit.value;
+              
+
+                const lowerLimit = parseInt(inputLowerValue) || 0;
+                const upperLimit = parseInt(inputUpperValue) || Infinity;
+
+                return filterByLimmitLines(commits, lowerLimit, upperLimit);
+            };
+        }
+
+
+
+        function createLinesPercentLimitFilter(filterInputsDiv)
+        {
+            let labelLowerLimit = document.createElement('label');
+            labelLowerLimit.innerHTML = 'Smallest % Changes (Lines):';
+            filterInputsDiv.appendChild(labelLowerLimit);
+
+            let inputLowerLimit = document.createElement('input');
+            inputLowerLimit.type = 'number';
+            inputLowerLimit.placeholder = "0";
+            filterInputsDiv.appendChild(inputLowerLimit);
+
+            let labelUpperLimit = document.createElement('label');
+            labelUpperLimit.innerHTML = 'Largest % Changes (Lines):';
+            filterInputsDiv.appendChild(labelUpperLimit);
+
+            let inputUpperLimit = document.createElement('input');
+            inputUpperLimit.type = 'number';
+            inputUpperLimit.placeholder = "0";
+            filterInputsDiv.appendChild(inputUpperLimit);
+
+            return (commits) => {
+                const smallestPercent = parseInt(inputLowerLimit.value) || 0;
+                const largestPercent = parseInt(inputUpperLimit.value) || 100;
+
+                // Calculate total added/removed and absolute difference for each commit
+                const commitChanges = commits.map(commit => {
+                    let totalAdded = 0;
+                    let totalRemoved = 0;
+
+                    commit.fileChanges.forEach(change => {
+                        totalAdded += change.added;
+                        totalRemoved += change.removed;
+                    });
+
+                    const totalAbsDifference = Math.abs(totalAdded - totalRemoved);
+
+                    return { ...commit, totalAdded, totalRemoved, totalAbsDifference };
+                });
+
+                // Sort commits by total absolute difference in ascending order
+                commitChanges.sort((a, b) => a.totalAbsDifference - b.totalAbsDifference);
+
+                // Calculate how many commits to filter based on percentages
+                const totalCommits = commitChanges.length;
+                const startIdx = Math.floor((smallestPercent / 100) * totalCommits);  // Start after the smallest %
+                const endIdx = Math.ceil((largestPercent / 100) * totalCommits);  // End before the largest %
+
+                // Return the commits that fall within the percentage range
+                return commitChanges.slice(startIdx, endIdx);
+            };
+        }
+
+        // filter by files
+
+        function buildFileTree(commitData) {
+            const fileTree = {};
+
+            commitData.forEach(commit => {
+                commit.fileChanges.forEach(change => {
+                    const pathParts = change.path.split('/');
+                    let current = fileTree;
+
+                    pathParts.forEach((part, idx) => {
+                        if (!current[part]) {
+                            current[part] = idx === pathParts.length - 1 ? null : {};  // Leaf nodes are null
+                        }
+                        current = current[part];
+                    });
+                });
+            });
+
+            // Recursive function to sort the keys of the tree
+            function sortTree(tree) {
+                const sorted = {};
+                Object.keys(tree).sort().forEach(key => {
+                    if (tree[key] && typeof tree[key] === 'object') {
+                        sorted[key] = sortTree(tree[key]);
+                    } else {
+                        sorted[key] = tree[key];
+                    }
+                });
+                return sorted;
+            }
+
+            return sortTree(fileTree);
+        }
+
+        function renderFileTree(tree, parentElement, currentPath = '') {
+            const ul = document.createElement('ul');
+            
+            for (const key in tree) {
+                const li = document.createElement('li');
+                
+                // Create the checkbox for each file/folder
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+
+                // Build the full path for the current file/folder
+                const fullPath = currentPath ? `${currentPath}/${key}` : key;
+                checkbox.value = fullPath;
+                checkbox.id = `file_${fullPath}`;
+                checkbox.classList.add('file-checkbox');
+
+                // Handle checkbox selection/deselection
+                checkbox.addEventListener('change', function() {
+                    // Select/Deselect all child nodes recursively
+                    toggleChildCheckboxes(li, checkbox.checked);
+                });
+
+                const label = document.createElement('label');
+                label.textContent = key;
+                label.htmlFor = `file_${fullPath}`;
+                label.style.display = 'inline';  // Keep the label in the same line as the toggle button
+
+                // Create a span to toggle visibility of children (expand/collapse)
+                if (tree[key] !== null) {
+                    const toggleSpan = document.createElement('span');
+                    toggleSpan.textContent = '►'; // Right-pointing triangle for collapsed state
+                    toggleSpan.classList.add('toggle-triangle');
+                    toggleSpan.style.marginRight = '5px';
+                    toggleSpan.style.cursor = 'pointer';  // Show pointer cursor to indicate it's clickable
+
+                    const childUl = document.createElement('ul');
+                    childUl.style.display = 'none';  // Start with children collapsed
+
+                    // Toggle the visibility of children when clicked
+                    toggleSpan.addEventListener('click', function() {
+                        const isCollapsed = childUl.style.display === 'none';
+                        childUl.style.display = isCollapsed ? 'block' : 'none';
+                        toggleSpan.textContent = isCollapsed ? '▼' : '►';  // Change triangle direction
+                    });
+
+                    li.appendChild(toggleSpan);  // Add the toggle span before the checkbox
+                    li.appendChild(checkbox);
+                    li.appendChild(label);
+
+                    // Recursively render children with updated path
+                    renderFileTree(tree[key], childUl, fullPath);
+                    li.appendChild(childUl);
+                } else {
+                    li.appendChild(checkbox);
+                    li.appendChild(label);
+                }
+
+                ul.appendChild(li);
+            }
+
+            parentElement.appendChild(ul);
+        }
+
+        function toggleChildCheckboxes(parentElement, checked) {
+            const childCheckboxes = parentElement.querySelectorAll('input[type="checkbox"]');
+            childCheckboxes.forEach(childCheckbox => {
+                childCheckbox.checked = checked;
+            });
+        }
+
+        // Example function to display the file tree
+        function displayFileTree(fileTreeContainer, commitData) {
+            const fileTree = buildFileTree(commitData);
+           
+            fileTreeContainer.innerHTML = '';  // Clear previous tree
+            renderFileTree(fileTree, fileTreeContainer);
+        }
+
+        function getSelectedFiles(fileTreeContainer) {
+            const selectedFiles = [];
+            const checkboxes = fileTreeContainer.querySelectorAll('.file-checkbox:checked');
+            
+            checkboxes.forEach(checkbox => {
+                selectedFiles.push(checkbox.value);
+            });
+
+            return selectedFiles;
+        }
+
+        function filterCommitsBySelectedFiles(fileTreeContainer, filteredCommitData) {
+            const selectedFiles = getSelectedFiles(fileTreeContainer);
+
+            // If no files are selected, return all commits
+            if (selectedFiles.length === 0) {
+                return filteredCommitData;
+            }
+
+            // Otherwise, filter the commits based on selected files
+            return filteredCommitData
+                .map(commit => {
+                    // Filter the fileChanges for only selected files
+                    const filteredFileChanges = commit.fileChanges.filter(change => selectedFiles.includes(change.path));
+
+                    // If no file changes match, exclude this commit
+                    if (filteredFileChanges.length > 0) {
+                        return {
+                            ...commit,  // Keep the rest of the commit data intact
+                            fileChanges: filteredFileChanges // Replace with the filtered file changes
+                        };
+                    } else {
+                        return null; // Exclude commits with no matching file changes
+                    }
+                })
+                .filter(commit => commit !== null); // Remove null entries (commits with no matching files)
+        }
+
+
+        function createFilesFilter(filterInputsDiv)
+        {
+            displayFileTree(filterInputsDiv, allCommitData);
+
+            return (commits) => {
+                return filterCommitsBySelectedFiles(filterInputsDiv,commits);
+            };
+        }
+
+
+        // filter by file extensions
+
+        function countFilesPerExtension(allCommitData) {
+            const extensionCounts = {};
+
+            allCommitData.forEach(commit => {
+                commit.fileChanges.forEach(change => {
+                    const extension = change.path.split('.').pop(); // Get the part after the last dot
+                    if (extension) {
+                        if (!extensionCounts[extension]) {
+                            extensionCounts[extension] = { count: 0, files: new Set() }; // Initialize count and unique files
+                        }
+                        extensionCounts[extension].count += 1; // Increment the count
+                        extensionCounts[extension].files.add(change.path); // Add the file to the set (for uniqueness)
+                    }
+                });
+            });
+
+            // Convert sets to counts
+            for (const ext in extensionCounts) {
+                extensionCounts[ext].count = extensionCounts[ext].files.size; // Count of unique files
+            }
+
+            return extensionCounts;
+        }
+
+
+        function sortExtensionsByFrequency(extensionCounts) {
+            return Object.entries(extensionCounts)
+                .sort(([, { count: countA }], [, { count: countB }]) => countB - countA) // Sort by unique file count in descending order
+                .map(([extension, { count }]) => ({ extension, count })); // Return sorted array of objects
+        }
+
+
+        function renderFileExtensionFilters(container, sortedExtensions) {
+           
+            container.innerHTML = ''; // Clear previous filters
+
+            sortedExtensions.forEach(({ extension, count }) => {
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = extension;
+                checkbox.classList.add('extension-checkbox');
+                checkbox.id = `ext_${extension}`;
+
+                const label = document.createElement('label');
+                label.textContent = `.${extension} (${count})`; // Show count in parentheses
+                label.htmlFor = `ext_${extension}`;
+                
+                container.appendChild(checkbox);
+                container.appendChild(label);
+                container.appendChild(document.createElement('br')); // Line break
+            });
+        }
+
+
+
+        function getSelectedExtensions(parent) {
+            const selectedExtensions = [];
+            const checkboxes = parent.querySelectorAll('.extension-checkbox:checked');
+            
+            checkboxes.forEach(checkbox => {
+                selectedExtensions.push(checkbox.value);
+            });
+
+            return selectedExtensions;
+        }
+
+
+        function filterCommitsByExtensions(parent, filteredCommitData) {
+            const selectedExtensions = getSelectedExtensions(parent);
+
+            // If no extensions are selected, return all commits
+            if (selectedExtensions.length === 0) {
+                return filteredCommitData;
+            }
+
+            return filteredCommitData
+                .map(commit => {
+                    // Filter the fileChanges for only the selected extensions
+                    const filteredFileChanges = commit.fileChanges.filter(change => {
+                        const fileExtension = change.path.split('.').pop();
+                        return selectedExtensions.includes(fileExtension);
+                    });
+
+                    // If no file changes match, exclude this commit
+                    if (filteredFileChanges.length > 0) {
+                        return {
+                            ...commit,
+                            fileChanges: filteredFileChanges
+                        };
+                    } else {
+                        return null;
+                    }
+                })
+                .filter(commit => commit !== null); // Remove null entries (commits with no matching files)
+        }
+
+        function createFileExtensionsFilter(filterInputsDiv)
+        {
+
+            // Count unique files per extension
+            const extensionCounts = countFilesPerExtension(allCommitData); 
+
+            // Sort extensions by their usage
+            const sortedExtensions = sortExtensionsByFrequency(extensionCounts); 
+
+            // Render sorted extensions in the UI with counts
+            renderFileExtensionFilters(filterInputsDiv, sortedExtensions);
+
+            return (commits) => {
+                return filterCommitsByExtensions(filterInputsDiv, commits);
+            };
+        }
+
+
+        // filter authors
+
+        function countCommitsPerAuthor(allCommitData) {
+            const authorCounts = {};
+
+            allCommitData.forEach(commit => {
+               
+                const author = commit.author; // Get the part after the last dot
+                    if (author) {
+                        if (!authorCounts[author]) {
+                            authorCounts[author] = { count: 0}; // Initialize count and unique files
+                        }
+                        authorCounts[author].count += 1; // Increment the count
+                    }
+            });
+
+            
+
+            return authorCounts;
+        }
+
+
+        function sortAuthorsByFrequency(authorCounts) {
+            return Object.entries(authorCounts)
+                .sort(([, { count: countA }], [, { count: countB }]) => countB - countA) // Sort by unique file count in descending order
+                .map(([author, { count }]) => ({ author, count })); // Return sorted array of objects
+        }
+
+        function renderAuthorFilters(container, authorsCounts) {
+           
+           container.innerHTML = ''; // Clear previous filters
+
+           authorsCounts.forEach(({author, count}) => {
+               const checkbox = document.createElement('input');
+               checkbox.type = 'checkbox';
+               checkbox.value = author;
+               checkbox.classList.add('author-checkbox');
+               checkbox.id = `author_${author}`;
+
+               const label = document.createElement('label');
+               label.textContent = `${author} (${count})`; // Show count in parentheses
+               label.htmlFor = `author_${author}`;
+               
+               container.appendChild(checkbox);
+               container.appendChild(label);
+               container.appendChild(document.createElement('br')); // Line break
+           });
+       }
+
+
+
+       function getSelectedAuthors(parent) {
+           const selectedAuthors = [];
+           const checkboxes = parent.querySelectorAll('.author-checkbox:checked');
+           
+           checkboxes.forEach(checkbox => {
+            selectedAuthors.push(checkbox.value);
+           });
+
+           return selectedAuthors;
+       }
+
+
+       function filterCommitsByAuthors(parent, commitData) {
+           const selectedAuthors = getSelectedAuthors(parent);
+
+           // If no extensions are selected, return all commits
+           if (selectedAuthors.length === 0) {
+               return commitData;
+           }
+
+           return commitData
+               .filter(commit => {
+                   // Filter the fileChanges for only the selected extensions
+                   return selectedAuthors.includes(commit.author);
+               });
+       }
+
+       function createAuthorFilter(filterInputsDiv)
+       {
+           const authorsCounts = countCommitsPerAuthor(allCommitData); 
+
+           const sortedAuthors = sortAuthorsByFrequency(authorsCounts); 
+
+           renderAuthorFilters(filterInputsDiv, sortedAuthors);
+
+           return (commits) => {
+               return filterCommitsByAuthors(filterInputsDiv, commits);
+           };
+       }
+
+        const filtersMap = new Map(); // Key: filter ID, Value: { type, value }
+
+        function fillDivAndCreateFilterFunction(filterType, filterInputsDiv)
+        {
+            switch (filterType) {
+                case "date":
+                    return createDateFilter(filterInputsDiv);
+                case "lines":
+                    return createLinesLimitFilter(filterInputsDiv);
+                case "percentile lines":
+                    return createLinesPercentLimitFilter(filterInputsDiv);
+                case "files":
+                    return createFilesFilter(filterInputsDiv);
+                case "extensions":
+                    return createFileExtensionsFilter(filterInputsDiv);
+                case "author":
+                    return createAuthorFilter(filterInputsDiv);
+                default:
+                    return null; // No inputs for "none"
+            }
+        }
+
+        // Update filter inputs based on selected filter type
+        function updateFilter(filterType, filterInputsDiv, filterIndex) {
+            filterInputsDiv.innerHTML = ''; // Clear previous inputs
+            filtersMap.set(filterIndex,fillDivAndCreateFilterFunction(filterType,filterInputsDiv));
+        }
+
+       
+         function aggregateByAuthor(commits, formula) {
+            const authorStats = {};
+
+            // Normalize time
+            const timestamps = commits.map(c => c.date).filter(ts => !isNaN(ts));
+            const minTime = Math.min(...timestamps);
+            const maxTime = Math.max(...timestamps);
+
+            for (const commit of commits) {
+                const { author, fileChanges, date } = commit;
+
+                let added = 0, removed = 0;
+                fileChanges.forEach(change => {
+                    added += change.added;
+                    removed += change.removed;
+                });
+
+                const t = (date - minTime) / (maxTime - minTime || 1); // normalize t in [0,1]
+                const a = added;
+                const r = removed;
+                const c = 1; // per commit, c = 1
+
+                let value = 0;
+                try {
+                    // Evaluate formula per commit
+                    value = eval(formula); 
+                } catch (e) {
+                    console.error('Error in formula evaluation:', e);
+                }
+
+                if (!authorStats[author]) {
+                    authorStats[author] = 0;
+                }
+                authorStats[author] += value;
+            }
+
+            // Sort by score descending
+            const sortedStats = Object.entries(authorStats).sort(([, a], [, b]) => b - a);
+            return sortedStats;
+        }
+
+        function aggregateScoreByWeek(commits, formula) {
+            // Helper to get ISO week and year from a Date
+            function getWeekYear(date) {
+                const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                const dayNum = d.getUTCDay() || 7; // Sunday=7
+                d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                return { year: d.getUTCFullYear(), week: weekNum };
+            }
+
+            // Normalize time (optional here, or reuse from aggregateByAuthor)
+            const timestamps = commits.map(c => c.date).filter(ts => !isNaN(ts));
+            const minTime = Math.min(...timestamps);
+            const maxTime = Math.max(...timestamps);
+
+            const weekScores = {}; // key: 'YYYY-WW' -> score
+
+            for (const commit of commits) {
+                const { fileChanges, date } = commit;
+
+                let added = 0, removed = 0;
+                fileChanges.forEach(change => {
+                    added += change.added;
+                    removed += change.removed;
+                });
+
+                const t = (date - minTime) / (maxTime - minTime || 1);
+                const a = added;
+                const r = removed;
+                const c = 1;
+
+                let value = 0;
+                try {
+                    value = eval(formula);
+                } catch (e) {
+                    console.error('Error in formula evaluation:', e);
+                }
+
+                const dt = new Date(date*1000);
+                const { year, week } = getWeekYear(dt);
+                const key = `${year}-W${week.toString().padStart(2, '0')}`;
+
+                if (!weekScores[key]) {
+                    weekScores[key] = 0;
+                }
+                weekScores[key] += value;
+            }
+
+            // Sort keys chronologically
+            const sortedWeeks = Object.keys(weekScores).sort((a, b) => {
+                const [yearA, wA] = a.split('-W').map(Number);
+                const [yearB, wB] = b.split('-W').map(Number);
+                if (yearA !== yearB) return yearA - yearB;
+                return wA - wB;
+            });
+
+            // Map sorted keys to data arrays
+            const labels = sortedWeeks;
+            const data = sortedWeeks.map(k => weekScores[k]);
+
+            return { labels, data };
+        }
+
+        let timeChartInstance; // global variable to hold the time chart instance
+
+        function drawScoreOverTimeChart(commits, formula) {
+            const { labels: weekLabels, data: weekData } = aggregateScoreByWeek(commits, formula);
+
+            const timeCtx = document.getElementById('scoreOverTimeChart').getContext('2d');
+
+            if (timeChartInstance) {
+                timeChartInstance.destroy();
+            }
+
+            timeChartInstance = new Chart(timeCtx, {
+                type: 'bar', // or 'line'
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: `Total Score Over Time (${formula})`,
+                        data: weekData,
+                        backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Week Number (Year)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Total Score'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        let chartInstance;
+
+        function refreshChart()
+        {
+            let commits = allCommitData;
+
+
+            // dynammic filters: 
+            const filtersContainer = document.getElementById('filters');
+
+            for (let filterDiv of filtersContainer.children) 
+            {
+                const filterIndex = filterDiv.getAttribute('data-filter-index'); // Retrieve the filter index
+                const filterType = filterDiv.querySelector('.filter-type').value;
+                let filterFunction = filtersMap.get(filterIndex);
+                if(filterFunction)
+                {
+                    console.log(`Applied filter: ${filterIndex}, Filter Type: ${filterType}`);
+                    commits = filterFunction(commits);
+                }
+                else
+                {
+                    console.log(`Skipped filter: ${filterIndex}, Filter Type: ${filterType}`);
+                }
+            };
+
+            const formulaInput = document.getElementById('customFormula').value || "a + r"; // default
+            const authorStats = aggregateByAuthor(commits, formulaInput);
+
+            const chartData = {
+                labels: authorStats.map(([author]) => author),
+                datasets: [{
+                    label: `Score: ${formulaInput}`,
+                    data: authorStats.map(([, score]) => score),
+                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            };
+
+
+            const ctx = document.getElementById('commitChart').getContext('2d');
+            
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+             // Draw the total score over time chart (new function)
+            drawScoreOverTimeChart(commits, formulaInput);
+        }
+
+        function displayFileContent(content) {
+            fillCommitData(content);
+            
+            refreshChart();
+        }
+</script>
+
+<footer style="margin-top: 2em; text-align: center; font-size: 0.85em; color: #666;">
+        <p>
+            🚀 This tool is open and reusable. Use it, share it, remix it — all at your own risk. No warranties, no guarantees.
+        </p>
+        <p>
+            Built with ❤️ and <a href="https://www.chartjs.org/" target="_blank">Chart.js</a> (MIT License).
+        </p>
+    </footer>
+</body>
+
+
+</html>
